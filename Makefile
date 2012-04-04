@@ -12,6 +12,9 @@ OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=osgg
 
 all: $(SOURCES) $(EXECUTABLE)
+
+server: server.cpp
+	 $(CC) $(LDFLAGS) server.cpp $(LIBS) -o $@
 	
 $(EXECUTABLE): $(OBJECTS)
 	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
