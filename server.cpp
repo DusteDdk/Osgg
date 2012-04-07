@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <SDL/SDL.h>
+#include <SDL/SDL_net.h>
 #include <vector>
 #include <list>
 #include <math.h>
@@ -26,6 +27,8 @@
 #include <sstream>
 
 #include <sys/time.h>
+
+#include "packet.hpp"
 
 #define VERSION "1.0SVN"
 
@@ -93,9 +96,9 @@ struct structGameRules gameRules;
 
 struct gameInfoStruct {
   float thrust;
-  gPs velocity;
   float speed; //Relative speed
-  
+
+  gPs velocity;
   float rotationForce;
   float distance;
 
@@ -665,7 +668,7 @@ void initNewGame(vector< vector<vert> >& polys, vector<entity>& ents)
   gameInfo.numMissions=0; //Amount of missions taken
   gameInfo.level=gameRules.startLevel;
   initGame(polys, ents);
-  
+
 }
 
 void shipCrash(entity ship)
@@ -676,7 +679,7 @@ void shipCrash(entity ship)
   gameInfo.thrust=0;
   gameInfo.rotationForce=0;
   gameState = GameStateGameOver;
-  
+
   cout << endl;
   cout << "Dead" << endl;
   cout << "Level "<<gameInfo.level << endl;
@@ -701,7 +704,7 @@ bool parseCmdLine(int argc, char **argv)
         chosenLevel=1;
       }
     }
-    
+
     if( strcmp(argv[i], "--levelfile") == 0 )
     {
       i++;
@@ -716,8 +719,8 @@ bool parseCmdLine(int argc, char **argv)
       cout << "Error: unknown argument '" << argv[i] << "'" << endl;
       return(0);
     }
-    
-    
+
+
   }
 
   return(1);
@@ -727,12 +730,12 @@ int main(int argc, char **argv)
 {
 
   srand ( time(NULL) );
-  
+
   /* These can be overwritten by the call to parseCmdLine */
   levelFile = DATADIR"levels/0.level";
 
   gameState = GameStateNewGame;
-  
+
   if(!parseCmdLine(argc, argv))
   {
     return(1);
@@ -744,17 +747,25 @@ int main(int argc, char **argv)
   {
     cout << SDL_GetError() << endl;
   }
-  
+
+
+
 
   cout << "Osgg Server"<<endl;
   cout << "Using level file '" << levelFile << "'" << endl;
-
-  
 
   int ticks=0, lastTicks=0;
 
 
 /** GameVars **/
+
+  clientState_t client;
+  memset( &client, 0, sizeof(clientState_t) );
+  clientState_t client2;
+  memset( &client2, 0, sizeof(clientState_t) );
+  clientState_t client1;
+  memset( &client1, 0, sizeof(clientState_t) );
+
   vector<vert> testVerts;
   vert tempVert;
   gPs collisionPoint;
@@ -768,21 +779,145 @@ int main(int argc, char **argv)
   readEnt("base.txt", gameInfo.baseStaticVerts);
   readEnt("enemy.txt", gameInfo.enemyStaticVerts);
 
+  if(SDLNet_Init()==-1) {
+    printf("SDLNet_Init: %s\n", SDLNet_GetError());
+    exit(2);
+  } else {
+    printf("Net initialized..\n");
+  }
+
+  //Allocate udp packet
+
+  //Open socket
+  UDPsocket udpsock;
+
+  udpsock=SDLNet_UDP_Open(1337);
+  if(!udpsock) {
+    printf("SDLNet_UDP_Open: %s\n", SDLNet_GetError());
+    exit(2);
+  } else {
+    printf("Listening for UDP connections on port 1337..\n");
+  }
+
+  //Allocate a packet
+  UDPpacket* packet = SDLNet_AllocPacket( sizeof(clientState_t) );
+  UDPpacket* out = SDLNet_AllocPacket( sizeof(int32_t) );
+
   //Enter Main loop
+  int nextId=0;
+
+  printf("Gamestate: %i %i\n", gameState, GameStateNewGame);
   while(gameState != GameStateQuit)
-  {    
-    
+  {
+
     while(SDL_PollEvent(&event))
     {
+
+    }
 
     switch(gameState)
     {
       case GameStateNewGame:
+        printf("Starting new game..\n");
         initNewGame(polys,ents);
+        printf("Started, entering gameloop..\n");
         gameState=GameStatePlaying;
       break;
 
       case GameStatePlaying:
+       // printf("Pretty loopy\n");
+
+
+      //Incoming data?
+      //  printf("Loop start!\n");
+
+      memset( &client1, 0, sizeof(clientState_t) );
+
+        while(SDLNet_UDP_Recv(udpsock, packet)!=0)
+        {
+        //  printf("Got packet!\n");
+        //  printf("Got packet!\n");
+
+          //Accept new clients
+
+          //Delete clients who left
+
+          //Get states from network
+          memcpy( &client, packet->data, sizeof(clientState_t) );
+ //                   dumpCS( &client);
+          if( client.id==1 )
+          {
+            memcpy( &client1, &client, sizeof(clientState_t) );
+
+            memcpy( packet->data, &client1, sizeof(clientState_t) );
+            if( SDLNet_UDP_Send(udpsock, 2, packet )==0 )
+            {
+           //   printf("Couldn't send data!! =(\n");
+            }
+
+          } else if( client.id == 2 )
+          {
+            memcpy( &client2, &client, sizeof(clientState_t) );
+            memcpy( packet->data, &client2, sizeof(clientState_t) );
+
+            if( SDLNet_UDP_Send(udpsock, 1, packet )==0 )
+            {
+            //  printf("Couldn't send data!! =(\n");
+            }
+          }
+
+          if( client.id==0 )
+          {
+            //Reply with next id:
+            if(!SDLNet_UDP_Bind(udpsock, ++nextId, &packet->address))
+            {
+              printf("Error binding..\n");
+            }
+
+            out->len=sizeof(int32_t);
+            out->channel=nextId;
+
+            memcpy( out->data, &nextId, sizeof(int32_t) );
+            if( !SDLNet_UDP_Send(udpsock, nextId, out) )
+            {
+              printf("Error sending back..\n");
+            } else {
+              printf("New client added on channel: %i\n", nextId);
+
+
+              entity tEnt;
+              tEnt.p.x=client.posX;
+              tEnt.p.y=client.posY;
+              tEnt.vel.x=0;
+              tEnt.vel.y=0;
+              tEnt.baseP = tEnt.p;
+              tEnt.type=entShip;
+              tEnt.rotation = 90.0;
+              tEnt.id = nextId;
+
+              ents.push_back(tEnt);
+
+
+            }
+
+          } /*else {
+            //Tell it about something interesting
+            client.posX += 10;
+            client.posY += 10;
+            int socketChannel = client.id;
+            client.id=1;
+
+            memcpy( packet->data, &client, sizeof(clientState_t) );
+
+            if( SDLNet_UDP_Send(udpsock, socketChannel, packet )==0 )
+            {
+              printf("Couldn't send data!! =(\n");
+            }
+          }*/
+
+
+        }
+
 
         //Check if any bullets hit the enviroment:
         bullets.envCol(polys);
@@ -793,65 +928,35 @@ int main(int argc, char **argv)
         {
           if(it->type == entShip)
           {
-            Uint8* keyStates = SDL_GetKeyState( NULL );
 
-            if(keyStates[SDLK_LEFT])
-            {
-              if(gameInfo.fuel > 0)
-              {
-                gameInfo.rotationForce += TURNINCRATE;
-                gameInfo.fuel -= gameRules.fuelConsumptionTurn;
-              }
-            } else if(keyStates[SDLK_RIGHT])
-            {
-              if(gameInfo.fuel > 0)
-              {
-                gameInfo.rotationForce -= TURNINCRATE;
-                gameInfo.fuel -= gameRules.fuelConsumptionTurn;
-              }
-            }
 
-            if(keyStates[SDLK_UP])
-            {
-              if(gameInfo.fuel > 0)
-              {
-                gameInfo.thrust = THRUSTINCRATE;
-                gameInfo.fuel -= gameRules.fuelConsumptionThrust;
-              } else {
-                gameInfo.thrust = 0;
-              }
-            } else
-            {
-              gameInfo.thrust = 0;
-            }
 
-            if(gameInfo.reloadTime != 0)
-            {
-              gameInfo.reloadTime--;
-            }
-            if(keyStates[SDLK_SPACE])
-            {
-              if(gameInfo.reloadTime == 0 && gameInfo.ammo >= 100)
-              {
-                gameInfo.ammo -= 100;
-                gameInfo.reloadTime = 25;
-                bullets.shoot(*it, gameInfo.velocity);
-              }
-            }
-	    
+
 	    //Update the speed
-	    gameInfo.speed = abs2(gameInfo.velocity.x*100)+abs2(gameInfo.velocity.y*100);
-
+        if( it->id == 1 )
+        {
+          it->p.x = client1.posX;
+          //printf("Posx: %f vs %f\n", client1.posX, it->p.x);
+          //printf("Posy: %f\n", client1.posY);
+          it->p.y = client1.posY;
+          it->vel.x = client1.velX;
+          it->vel.y = client1.velY;
+          it->rotation = client1.rot;
+//          dumpCS(&client1);
+          //printf("Updating entity (%f %f) %f..\n", it->id, it->p.x, it->p.y);
+        }
+	    gameInfo.speed = abs2(it->vel.x*100)+abs2(it->vel.y*100);
+      printf("Speed: %f\n", gameInfo.speed);
 	    //Update velocities
             gameInfo.velocity.x += gameInfo.thrust * cos( (it->rotation*0.0174532925) );
             gameInfo.velocity.y += gameInfo.thrust * sin( (it->rotation*0.0174532925) );
 
             gameInfo.velocity.y -= GRAVITY;
 
-	    
+
             if(gameInfo.rotationForce > 0)
             {
-            
+
               gameInfo.rotationForce /= 1.01;
               if(gameInfo.rotationForce < 0)
               {
@@ -871,6 +976,7 @@ int main(int argc, char **argv)
             {
               if(PolyCol(*PolyIt, gameInfo.shipVerts))
               {
+                printf("Client %i crashed into a wall\n", it->id);
                 shipCrash(*it);
               }
             }
@@ -958,7 +1064,7 @@ int main(int argc, char **argv)
             it->p.x += gameInfo.velocity.x;
             it->p.y += gameInfo.velocity.y;
 
-          } else 
+          } else
           /** Update enemies **/
           if(it->type == entEnemy)
           {
@@ -983,13 +1089,15 @@ int main(int argc, char **argv)
 
 
 
-    }
-    
+
+
     ticks += SDL_GetTicks() - lastTicks;
     lastTicks = SDL_GetTicks();
-    SDL_Delay(10);
+    SDL_Delay(128);
   }
 
+  SDLNet_Quit();
+  SDL_Quit();
 
   return(0);
 }

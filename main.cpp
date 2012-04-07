@@ -18,6 +18,7 @@
 
 #include <iostream>
 #include <SDL/SDL.h>
+#include <SDL/SDL_net.h>
 #include <SDL/SDL_image.h>
 #include <GL/gl.h>
 #include <vector>
@@ -26,8 +27,9 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
-
 #include <sys/time.h>
+
+#include "packet.hpp"
 
 #ifndef WIN32
     #include <endian.h>
@@ -40,7 +42,7 @@
 
 #define VERSION "1.0SVN"
 
-
+clientState_t clientState;
 
 #ifndef DATADIR
     #define DATADIR "./"
@@ -130,7 +132,7 @@ struct structDispInfo {
 
   pS screenRes; //The current resolution ) SDL_GetVideoInfo() );
   GLfloat bgColor[3];
-  
+
   bool enableZoom;
 
 };
@@ -158,8 +160,9 @@ struct gameInfoStruct {
   gPs velocity;
   GLfloat speed; //Relative speed
   GLfloat distance;
-  
+
   GLfloat rotationForce;
+  float absRotation;
 
   int fuel;
   int reloadTime; //After this amount of fames (60th's of 1 sec) player can shoot again
@@ -422,7 +425,7 @@ void setSeneSize()
 void setRes(int x, int y)
 {
   SDL_GL_SetAttribute( SDL_GL_STENCIL_SIZE, 1 );
-  
+
   /** Try to enable vsync **/
   if(vsync)
   {
@@ -1312,7 +1315,7 @@ void advanceLevel(vector< vector<vert> >& polys, vector<entity>& ents)
   cout << "Completed" << endl;
   cout << "File " << levelFile <<endl;
   cout << "Time " << gameInfo.score/60 <<"." << int(((gameInfo.score%60)*2)) << endl;
-  
+
   gameInfo.level++;
   t << "./levels/" << gameInfo.level << ".level";
   levelFile = t.str();
@@ -1334,7 +1337,7 @@ void initNewGame(vector< vector<vert> >& polys, vector<entity>& ents)
     dispInfo.glBaseZoom = 18;
   else
     dispInfo.glBaseZoom = 28;
-    
+
   dispInfo.glZoom = dispInfo.glBaseZoom;
   setSeneSize();
   gameState = GameStatePlaying;
@@ -1342,7 +1345,7 @@ void initNewGame(vector< vector<vert> >& polys, vector<entity>& ents)
   gameInfo.numMissions=0; //Amount of missions taken
   gameInfo.level=gameRules.startLevel;
   initGame(polys, ents);
-  
+
 }
 
 void shipCrash(entity ship)
@@ -1354,7 +1357,7 @@ void shipCrash(entity ship)
   gameInfo.thrust=0;
   gameInfo.rotationForce=0;
   gameState = GameStateGameOver;
-  
+
   cout << endl;
   cout << "Dead" << endl;
   cout << "Level "<<gameInfo.level << endl;
@@ -1478,9 +1481,9 @@ void saveDemo()
     df = demoFrames[i];
     demo.write((char *)(&df), sizeof(demoFrame));
   }
-  
+
   demo.write((char *)(levelFile.data()), sizeof(char)*levelFile.length() );
-  
+
   demo.close();
 }
 
@@ -1547,7 +1550,7 @@ bool parseCmdLine(int argc, char **argv)
         chosenLevel=1;
       }
     }
-    
+
     if( strcmp(argv[i], "--levelfile") == 0 )
     {
       i++;
@@ -1593,7 +1596,7 @@ bool parseCmdLine(int argc, char **argv)
         return(0);
       }
       char rgb[5];
-      
+
       //Red
       sprintf(rgb, "0x%c%c", argv[i][0], argv[i][1]);
       dispInfo.bgColor[0] = 0.003921569*strtol(rgb, NULL, 16);
@@ -1622,8 +1625,8 @@ bool parseCmdLine(int argc, char **argv)
       cout << "Error: unknown argument '" << argv[i] << "'" << endl;
       return(0);
     }
-    
-    
+
+
   }
 
 
@@ -1640,7 +1643,7 @@ int main(int argc, char **argv)
 {
 
   srand ( time(NULL) );
-  
+
   /* These can be overwritten by the call to parseCmdLine */
   dispInfo.enableZoom=1;
   soundOn=1;
@@ -1654,7 +1657,7 @@ int main(int argc, char **argv)
   showfps=0;
   vsync=1;
   gameState = GameStateNewGame;
-  
+
   if(!parseCmdLine(argc, argv))
   {
     return(1);
@@ -1698,7 +1701,7 @@ int main(int argc, char **argv)
 
   soundMan = new soundClass;
   soundMan->init();
-  
+
   /* for fps */
   struct timeval timeStart,timeStop;
   int renderTime;
@@ -1728,12 +1731,61 @@ int main(int argc, char **argv)
   gPs collisionPoint;
   bool crashed=0;
   char score[256];
-
+  clientState.id = -1;
   GLfloat scale;
 
   readEnt("ship.txt", gameInfo.shipStaticVerts);
   readEnt("base.txt", gameInfo.baseStaticVerts);
   readEnt("enemy.txt", gameInfo.enemyStaticVerts);
+
+	/* initialize SDL_net */
+	if(SDLNet_Init()==-1)
+	{
+		printf("SDLNet_Init: %s\n",SDLNet_GetError());
+		exit(2);
+	}
+
+	UDPpacket* out;
+	UDPpacket* in;
+	if(!(out=SDLNet_AllocPacket(sizeof(clientState_t))))
+	{
+		printf("SDLNet_AllocPacket: %s\n",SDLNet_GetError());
+		exit(6);
+	}
+	if(!(in=SDLNet_AllocPacket(sizeof(clientState_t))))
+	{
+		printf("SDLNet_AllocPacket: %s\n",SDLNet_GetError());
+		exit(6);
+	}
+
+	IPaddress ip;
+	UDPsocket udpsock;
+
+  //Connect
+	if(SDLNet_ResolveHost(&ip,"localhost",1337)==-1)
+	{
+		printf("SDLNet_ResolveHost: %s\n",SDLNet_GetError());
+		exit(4);
+	}
+
+  //Open socket
+  udpsock=SDLNet_UDP_Open(0);
+  if(!udpsock) {
+    printf("SDLNet_UDP_Open: %s\n", SDLNet_GetError());
+    exit(2);
+  }
+
+	/* bind server address to channel 0 */
+	if(SDLNet_UDP_Bind(udpsock, 0, &ip)==-1)
+	{
+		printf("SDLNet_UDP_Bind: %s\n",SDLNet_GetError());
+		exit(7);
+	}
+
+  clientState_t enemyState;
+  memset( &enemyState,0, sizeof(enemyState) );
+  enemyState.posY=10;
+  enemyState.posX=10;
 
   //Enter Main loop
   while(gameState != GameStateQuit)
@@ -1742,7 +1794,7 @@ int main(int argc, char **argv)
     {
       gettimeofday(&timeStart, NULL);
     }
-    
+
     while(SDL_PollEvent(&event))
     {
       switch(event.type)
@@ -1942,8 +1994,22 @@ int main(int argc, char **argv)
       case GameStateNewGame:
         initNewGame(polys,ents);
         gameState=GameStatePlaying;
+
+        entity tEnt;
+        tEnt.p.x=10;
+        tEnt.p.y=10;
+        tEnt.vel.x=0;
+        tEnt.vel.y=0;
+        tEnt.baseP = tEnt.p;
+        tEnt.type=entEnemy;
+        tEnt.rotation = 90.0;
+        tEnt.id = 999;
+
+        ents.push_back(tEnt);
+
+
       break;
-      
+
       case GameStateStartEditor:
         initNewGame(polys, ents);
         gameState=GameStateEditor;
@@ -1965,7 +2031,62 @@ int main(int argc, char **argv)
         renderEntities(ents);
         renderRadar(ents,polys);
         sparkler.render();
-        
+
+        //Update clientstate (for networking)
+        clientState.posX = dispInfo.camPos.x;
+        clientState.posY = dispInfo.camPos.y;
+        clientState.velX = gameInfo.velocity.x;
+        clientState.velY = gameInfo.velocity.y;
+        clientState.rot = gameInfo.absRotation;
+        clientState.rotf = gameInfo.rotationForce;
+
+//        dumpCS(&clientState);
+
+          int numsent;
+
+          while(SDLNet_UDP_Recv(udpsock, in)!=0)
+          {
+  //          printf("Yay! Got reply!!!\n");
+            if( in->len == sizeof(int32_t ) )
+            {
+              memcpy( &clientState.id, in->data, sizeof(int32_t) );
+              printf("Our new id: %i\n", clientState.id );
+            } else if( in->len == sizeof(clientState_t) )
+            {
+              memcpy( &enemyState, in->data, sizeof(clientState_t) );
+           //   dumpCS(&enemyState);
+            } else {
+              printf("Unknown reply of %i bytes vs known (%i and %i)..\n", in->len, sizeof(int32_t), sizeof(clientState_t) );
+            }
+          }
+
+
+
+          if(clientState.id!=0)
+          {
+
+            if(clientState.id==-1)
+            {
+              clientState.id=0;
+              printf("Stop sending packages and wait for id...\n");
+            }
+
+            out->channel=0;
+            out->len=sizeof(clientState_t);
+            out->maxlen=sizeof(clientState_t);
+            memcpy( (void*)out->data, (void*)&clientState, sizeof(clientState_t) );
+
+            numsent=SDLNet_UDP_Send(udpsock, 0, out);
+
+            if(!numsent) {
+              printf("SDLNet_UDP_Send: %s\n", SDLNet_GetError());
+            // do something because we failed to send
+            // this may just be because no addresses are bound to the channel...
+            }
+          }
+
+        clientState.shooting=(int8_t)0;
+
         //Check if any bullets hit the enviroment:
         bullets.envCol(polys);
         bullets.render();
@@ -1983,7 +2104,7 @@ int main(int argc, char **argv)
           sprintf(score, "%i fps", lastFps);
           glText->write(score, FONT_DEFAULT,0, 40.0*scale, -120*scale, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
         }
-        
+
         //Ents:
         for(vector<entity>::iterator it = ents.begin(); it != ents.end(); ++it)
         {
@@ -1995,7 +2116,7 @@ int main(int argc, char **argv)
             if(gameInfo.recording)
             {
               demoRec(keyStates);
-              
+
               //Write on screen
               sprintf(score, "Rec: %i KiB.", (demoFrames.size()*(sizeof(demoFrame)))/1024 );
               glText->write(score, FONT_DEFAULT,0, 40.0*scale, 50*scale, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
@@ -2045,12 +2166,13 @@ int main(int argc, char **argv)
             {
               if(gameInfo.reloadTime == 0 && gameInfo.ammo >= 100)
               {
+                clientState.shooting=1;
                 gameInfo.ammo -= 100;
                 gameInfo.reloadTime = 25;
                 bullets.shoot(*it, gameInfo.velocity);
               }
             }
-	    
+
 	    //Update the speed
 	    gameInfo.speed = abs2(gameInfo.velocity.x*100)+abs2(gameInfo.velocity.y*100);
 	    //Update distance to destination
@@ -2067,10 +2189,10 @@ int main(int argc, char **argv)
 	    {
 	      static GLfloat optimalZoom=0.0;
 	      optimalZoom = dispInfo.glBaseZoom + (gameInfo.speed*1.25);
-	      
+
 	      if( gameInfo.distance < 40 )
 		optimalZoom = dispInfo.glBaseZoom - (10-gameInfo.distance);
-	      
+
 	      if( dispInfo.glZoom != optimalZoom )
 	      {
 		if(optimalZoom > dispInfo.glZoom)
@@ -2087,10 +2209,10 @@ int main(int argc, char **argv)
 	      }
 	    }
 
-	    
+
             if(gameInfo.rotationForce > 0)
             {
-            
+
               gameInfo.rotationForce /= 1.01;
               if(gameInfo.rotationForce < 0)
               {
@@ -2116,7 +2238,7 @@ int main(int argc, char **argv)
             {
               if(PolyCol(*PolyIt, gameInfo.shipVerts))
               {
-                shipCrash(*it);
+//                shipCrash(*it);
               }
             }
 
@@ -2205,28 +2327,55 @@ int main(int argc, char **argv)
             }
 
             it->rotation += gameInfo.rotationForce;
+            gameInfo.absRotation = it->rotation;
             it->p.x += gameInfo.velocity.x;
             it->p.y += gameInfo.velocity.y;
 
             dispInfo.camPos = it->p;
-          } else 
+          } else
           /** Update enemies **/
           if(it->type == entEnemy)
           {
             //Only do this if they are in the screen
-            if(boxCol(dispInfo.camPos, it->p, dispInfo.glSceneSize.x+3) )
+            if(boxCol(dispInfo.camPos, it->p, dispInfo.glSceneSize.x+3) || it->id==999)
             {
-
-              it->vel.y -= GRAVITY;
-              
-              if(it->p.y <= it->baseP.y-0.3)
+              if( it->id == 999 )
               {
-                it->vel.y += 0.01;
-                sparkler.spawn(it->p, it->rotation+180, 40, 0.7, 5);
+                if(enemyState.id != 0 )
+                {
+                  it->p.y = enemyState.posY;
+                  it->p.x = enemyState.posX;
+                  it->vel.y = enemyState.velY;
+                  it->vel.x = enemyState.velX;
+                  it->rotation = enemyState.rot;
+                  if( (int)enemyState.shooting==1 )
+                  {
+                    printf("Yay!\n");
+                    sparkler.spawn(it->p, it->rotation+180, 40, 0.7, 5);
+                  }
+                  enemyState.id=0;
+                } else {
+                  it->rotation += enemyState.rotf;
+                }
+
+              } else {
+
+
+
+                it->vel.y -= GRAVITY;
+
+                if(it->p.y <= it->baseP.y-0.3)
+                {
+                  it->vel.y += 0.01;
+                  sparkler.spawn(it->p, it->rotation+180, 40, 0.7, 5);
+                }
+
               }
-              
+
               it->p.y += it->vel.y;
-              
+              it->p.x += it->vel.x;
+
+
             }
           }
         }
@@ -2549,7 +2698,7 @@ int main(int argc, char **argv)
         #endif
       }
     }
-    
+
     fps++;
     ticks += SDL_GetTicks() - lastTicks;
     lastTicks = SDL_GetTicks();
