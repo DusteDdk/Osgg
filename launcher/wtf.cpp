@@ -30,29 +30,39 @@ void mW::on_btnStart_clicked()
   cmdLine += "\"";
   
   /** This HAS to be first because osgg only takes a int as argument 1 **/
-  if(tabLvl->currentIndex() == 1) //Custom level
+
+  if( isDemo )
   {
-    /* Check that something is selected */
-    if(lstCustomLvl->currentRow() != -1)
+    cmdLine += " --levelfile \"";
+    cmdLine += txtDemoLevel->text().toStdString();
+    cmdLine += "\"";
+    cmdLine += " --playdemo \"demos/"+lstDemo->currentItem()->text().toStdString() + "\"";
+
+  } else {
+    if(tabLvl->currentIndex() == 1) //Custom level
     {
-      cmdLine += " --levelfile \"";
-      cmdLine += osggUserDir.toStdString();
-      cmdLine += "/levels/";
-      cmdLine += osggCustomLevel.toStdString();
-      cmdLine += ".level\"";
-    } else {
-      QMessageBox info;
-      info.setText("Error: No level selected.");
-      info.exec();
-      return;
+      /* Check that something is selected */
+      if(lstCustomLvl->currentRow() != -1)
+      {
+        cmdLine += " --levelfile \"";
+        cmdLine += osggUserDir.toStdString();
+        cmdLine += "/levels/";
+        cmdLine += osggCustomLevel.toStdString();
+        cmdLine += ".level\"";
+      } else {
+        QMessageBox info;
+        info.setText("Error: No level selected.");
+        info.exec();
+        return;
+      }
+
+    } else { //std level
+      ostringstream t;
+      t.clear();
+      t << " " << numStartLevel->value();
+      cmdLine += t.str();
     }
-    
-  } else { //std level
-    ostringstream t;
-    t.clear();
-    t << " " << numStartLevel->value();
-    cmdLine += t.str();
-  } 
+  }
   
   if(chEditor->isChecked())
     cmdLine += " --edit";
@@ -77,7 +87,8 @@ void mW::on_btnStart_clicked()
     cmdLine += osggBackgroundColor.toStdString();
   }
   
-  //TODO: append --savedemo --playdemo
+  //TODO: append --savedemo
+
 
   FILE *stream;
   QStringList output;
@@ -99,10 +110,10 @@ void mW::listLevels()
   QStringList filter;
   QFileInfoList fileInfoList;
   QString name;
-  
+
   lstStdLvl->clear();
   lstCustomLvl->clear();
-  
+
   filter << "*.level";
   QDir qd(osggDataDir+"/levels/");
   qd.setNameFilters(filter);
@@ -117,14 +128,14 @@ void mW::listLevels()
       lstStdLvl->insertItem(0, name);
     }
     numStartLevel->setMaximum(i-1);
-    
+
     lstStdLvl->sortItems(Qt::AscendingOrder);
   } else {
     QMessageBox info;
     info.setText("Standard level dir '"+osggDataDir+"levels/' does not exist, check settings.");
     info.exec();
   }
-  
+
   /* Custom (user) levels */
   qd.cd(osggUserDir+"/levels/");
   if( qd.exists() )
@@ -137,11 +148,43 @@ void mW::listLevels()
       name = name.left( name.indexOf('.') );
       lstCustomLvl->insertItem(0, name );
     }
-    
-    
+
+
   }
 
 }
+
+/* Populate tables */
+void mW::listDemos()
+{
+  QStringList filter;
+  QFileInfoList fileInfoList;
+
+  filter << "*.bin";
+  QDir qd(osggDataDir+"/demos/");
+  qd.setNameFilters(filter);
+
+  if( qd.exists() )
+  {
+    fileInfoList = qd.entryInfoList();
+    int i;
+    for(i=0; i < fileInfoList.size(); i++)
+    {
+      QFileInfo fileInfo = fileInfoList.at(i);
+      QString name = fileInfo.fileName();
+      lstDemo->insertItem(0, name );
+    }
+
+    lstDemo->sortItems(Qt::AscendingOrder);
+  } else {
+    QMessageBox info;
+    info.setText("Demo dir '"+osggDataDir+"demos/' does not exist, check settings.");
+    info.exec();
+  }
+
+}
+
+
 
 void mW::saveSettings()
 {
@@ -279,6 +322,50 @@ void mW::on_btnBrowseDataDir_clicked()
     refreshSettings();
     listLevels();
   }
+}
+
+void mW::on_btnDemoBrowse_clicked()
+{
+  QFileDialog fd(this);
+  fd.setFileMode(QFileDialog::ExistingFile);
+  if(fd.exec())
+  {
+    QStringList dir = fd.selectedFiles();
+    txtDemoLevel->setText( dir.at(0) );
+  }
+}
+void mW::on_btnPlayDemo_clicked()
+{
+  QMessageBox info;
+  //Check that the filelist is not empty
+  if( lstDemo->count() < 1 )
+  {
+      info.setText("No demos found in the demo dir.");
+      info.exec();
+      return;
+  }
+
+  QListWidgetItem *item =  lstDemo->currentItem();
+  //Check that a demo has been selected
+  if( item->text().length() == 0 )
+  {
+      info.setText("No demo selected.");
+      info.exec();
+  }
+  
+  //Check that a demo-level has been selected
+  if( txtDemoLevel->text().length() < 3  )
+  {
+      info.setText("No level selected to play demo inside.");
+      info.exec();
+      return;
+  }
+
+  //Set "isDemo" and call
+  isDemo=1;
+  on_btnStart_clicked();
+
+  isDemo=false;
 }
 
 void mW::on_btnBrowseExecPath_clicked()
@@ -443,6 +530,8 @@ mW::mW(QMainWindow* p) : QMainWindow(p)
   refreshSettings();
 
   listLevels();
+  listDemos();
+  
   QObject::connect(txtDataDir, SIGNAL(textChanged(QString)), this, SLOT(on_txtDataDir_textChanged(QString)));
   QObject::connect(txtExecPath, SIGNAL(textChanged(QString)), this, SLOT(on_txtExecPath_textChanged(QString)));
   QObject::connect(btnStart, SIGNAL(clicked()), this, SLOT(on_btnStart_clicked()));
@@ -455,10 +544,15 @@ mW::mW(QMainWindow* p) : QMainWindow(p)
   QObject::connect(btnRemoveCustom, SIGNAL(clicked()), this, SLOT(on_btnRemoveCustom_clicked()));
   QObject::connect(btnCreate, SIGNAL(clicked()), this, SLOT(on_btnCreate_clicked()));
   
+  QObject::connect(btnDemoBrowse, SIGNAL(clicked()), this, SLOT(on_btnDemoBrowse_clicked()));
+  QObject::connect(btnPlayDemo, SIGNAL(clicked()), this, SLOT(on_btnPlayDemo_clicked()));
+
   pScene = new lvlPrevScene;
   lvlPreview->scale(0.5, -0.5);
   lvlPreview->setRenderHints(QPainter::Antialiasing);
   on_numStartLevel_valueChanged(0);
+  isDemo=0;
+  
 }
 
 mW::~mW()

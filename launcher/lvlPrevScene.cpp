@@ -143,7 +143,5 @@ void lvlPrevScene::load(const char* file)
 
     }
   }
-  cout << sceneRect().width() << "x" << sceneRect().height() << endl;
-  
   
 }
