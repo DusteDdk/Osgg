@@ -944,9 +944,11 @@ int main(int argc, char **argv)
           it->rotation = client1.rot;
 //          dumpCS(&client1);
           //printf("Updating entity (%f %f) %f..\n", it->id, it->p.x, it->p.y);
+            updateEntVerts(*it, gameInfo.shipVerts, gameInfo.shipStaticVerts);
+
         }
 	    gameInfo.speed = abs2(it->vel.x*100)+abs2(it->vel.y*100);
-      printf("Speed: %f\n", gameInfo.speed);
+      //printf("Speed: %f\n", gameInfo.speed);
 	    //Update velocities
             gameInfo.velocity.x += gameInfo.thrust * cos( (it->rotation*0.0174532925) );
             gameInfo.velocity.y += gameInfo.thrust * sin( (it->rotation*0.0174532925) );
@@ -1093,7 +1095,7 @@ int main(int argc, char **argv)
 
     ticks += SDL_GetTicks() - lastTicks;
     lastTicks = SDL_GetTicks();
-    SDL_Delay(128);
+    SDL_Delay(300);
   }
 
   SDLNet_Quit();

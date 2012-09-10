@@ -2133,14 +2133,14 @@ int main(int argc, char **argv)
               if(gameInfo.fuel > 0)
               {
                 gameInfo.rotationForce += TURNINCRATE;
-                gameInfo.fuel -= gameRules.fuelConsumptionTurn;
+//                gameInfo.fuel -= gameRules.fuelConsumptionTurn;
               }
             } else if(keyStates[SDLK_RIGHT])
             {
               if(gameInfo.fuel > 0)
               {
                 gameInfo.rotationForce -= TURNINCRATE;
-                gameInfo.fuel -= gameRules.fuelConsumptionTurn;
+ //               gameInfo.fuel -= gameRules.fuelConsumptionTurn;
               }
             }
 
@@ -2149,7 +2149,7 @@ int main(int argc, char **argv)
               if(gameInfo.fuel > 0)
               {
                 gameInfo.thrust = THRUSTINCRATE;
-                gameInfo.fuel -= gameRules.fuelConsumptionThrust;
+   //             gameInfo.fuel -= gameRules.fuelConsumptionThrust;
               } else {
                 gameInfo.thrust = 0;
               }
