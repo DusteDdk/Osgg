@@ -14,10 +14,13 @@ class mW : public QMainWindow, private Ui::MainWindow
     QString osggUserDir;
     QString osggBackgroundColor;
     QString osggCustomLevel;
+
+    int isDemo;
     
     void saveSettings();
     void loadSettings();
     void listLevels();
+    void listDemos();
     void refreshSettings();
     
     lvlPrevScene* pScene;
@@ -35,7 +38,10 @@ class mW : public QMainWindow, private Ui::MainWindow
     void on_btnAddCustom_clicked();
     void on_btnRemoveCustom_clicked();
     void on_btnCreate_clicked();
-  
+
+    void on_btnDemoBrowse_clicked();
+    void on_btnPlayDemo_clicked();
+
   public:
     mW(QMainWindow* p);
     ~mW();
