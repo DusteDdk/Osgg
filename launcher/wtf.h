@@ -16,6 +16,7 @@ class mW : public QMainWindow, private Ui::MainWindow
     QString osggCustomLevel;
 
     int isDemo;
+    int runEditor;
     
     void saveSettings();
     void loadSettings();
@@ -38,6 +39,7 @@ class mW : public QMainWindow, private Ui::MainWindow
     void on_btnAddCustom_clicked();
     void on_btnRemoveCustom_clicked();
     void on_btnCreate_clicked();
+    void on_btnEdit_clicked();
 
     void on_btnDemoBrowse_clicked();
     void on_btnPlayDemo_clicked();
@@ -45,4 +47,5 @@ class mW : public QMainWindow, private Ui::MainWindow
   public:
     mW(QMainWindow* p);
     ~mW();
+
 };

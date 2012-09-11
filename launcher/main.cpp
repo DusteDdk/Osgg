@@ -1,8 +1,4 @@
-
-
 #include "ui_untitled.h"
-
-
 #include "wtf.h"
 
 int main(int argc, char *argv[])

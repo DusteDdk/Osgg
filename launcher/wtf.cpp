@@ -64,7 +64,7 @@ void mW::on_btnStart_clicked()
     }
   }
   
-  if(chEditor->isChecked())
+  if(runEditor)
     cmdLine += " --edit";
   
   if(chIs->isChecked())
@@ -102,6 +102,9 @@ void mW::on_btnStart_clicked()
     output << buffer;
   }
   
+  //Clear isDemo and runEditor
+  isDemo=0;
+  runEditor=0;
 }
 
 /* Populate tables */
@@ -198,8 +201,6 @@ void mW::saveSettings()
       QTextStream t(&cfgFile);
       t <<"dataDir="<<osggDataDir<<endl;
       t << "execPath="<<osggExecPath << endl;
-      t << "startEditor=" << chEditor->isChecked() << endl;
-      t << "is=" << chIs->isChecked() << endl;
       t << "soundOff=" << chSound->isChecked() << endl;
       t << "fullScreen=" << chFullScreen->isChecked() << endl;
       t << "bgColor="<<osggBackgroundColor << endl;
@@ -245,9 +246,6 @@ void mW::loadSettings()
           } else if(set=="execPath")
           {
             osggExecPath = val.data();
-          } else if(set=="startEditor")
-          {
-            chEditor->setChecked( atoi(val.data()) );
           } else if(set=="is")
           {
             chIs->setChecked( atoi(val.data()) );
@@ -364,8 +362,6 @@ void mW::on_btnPlayDemo_clicked()
   //Set "isDemo" and call
   isDemo=1;
   on_btnStart_clicked();
-
-  isDemo=false;
 }
 
 void mW::on_btnBrowseExecPath_clicked()
@@ -420,10 +416,13 @@ void mW::on_numStartLevel_valueChanged(int l)
 void mW::preview(const char* file)
 {
   delete pScene;
-  pScene = new lvlPrevScene;
-  lvlPreview->setScene( pScene );
-  pScene->load(file);
-  lvlPreview->fitInView( pScene->sceneRect(),Qt::KeepAspectRatio );
+    pScene = new lvlPrevScene();
+    pScene->load(file);
+
+    lvlPreview->scale(0.5, -0.5);
+    lvlPreview->setRenderHints(QPainter::Antialiasing);
+
+    lvlPreview->setScene( pScene );
 }
 
 void mW::on_btnAddCustom_clicked()
@@ -499,7 +498,6 @@ void mW::on_btnCreate_clicked()
       return;
     }
     
-    chEditor->setChecked(true);
     
     /* Write a small standard file */
     QString ld;
@@ -507,6 +505,7 @@ void mW::on_btnCreate_clicked()
     if( newLvl.open(QIODevice::WriteOnly) )
     {
       newLvl.write( ld.toAscii() );
+      newLvl.close();
     } else {
       info.setText("Error: Could not open file for write.");
       info.exec();
@@ -518,9 +517,19 @@ void mW::on_btnCreate_clicked()
     QList<QListWidgetItem *> list = lstCustomLvl->findItems( osggCustomLevel,Qt::MatchFixedString );
     /* Set it */
     lstCustomLvl->setCurrentItem( list.at(0) );
+    //Run it
+    runEditor=1;
+    on_btnStart_clicked();
 
   }
 }
+
+void mW::on_btnEdit_clicked()
+{
+    runEditor=1;
+    on_btnStart_clicked();
+}
+
 
 mW::mW(QMainWindow* p) : QMainWindow(p)
 {
@@ -543,15 +552,14 @@ mW::mW(QMainWindow* p) : QMainWindow(p)
   QObject::connect(btnAddCustom, SIGNAL(clicked()), this, SLOT(on_btnAddCustom_clicked()));
   QObject::connect(btnRemoveCustom, SIGNAL(clicked()), this, SLOT(on_btnRemoveCustom_clicked()));
   QObject::connect(btnCreate, SIGNAL(clicked()), this, SLOT(on_btnCreate_clicked()));
-  
+  QObject::connect(btnEdit, SIGNAL(clicked()), this, SLOT(on_btnEdit_clicked()));
+
   QObject::connect(btnDemoBrowse, SIGNAL(clicked()), this, SLOT(on_btnDemoBrowse_clicked()));
   QObject::connect(btnPlayDemo, SIGNAL(clicked()), this, SLOT(on_btnPlayDemo_clicked()));
 
-  pScene = new lvlPrevScene;
-  lvlPreview->scale(0.5, -0.5);
-  lvlPreview->setRenderHints(QPainter::Antialiasing);
   on_numStartLevel_valueChanged(0);
   isDemo=0;
+  runEditor=0;
   
 }
 
@@ -559,4 +567,3 @@ mW::~mW()
 {
   saveSettings();
 }
-

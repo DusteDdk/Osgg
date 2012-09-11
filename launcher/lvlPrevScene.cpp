@@ -91,12 +91,6 @@ void lvlPrevScene::load(const char* file)
   
   load.close();
   
-  //Biggest, Smallest pos
-  pos_t b,s;
-  b.x=0;
-  b.y=0;
-  s = b;
-  
   qreal x,y;
   float c=0;
   bool start;
@@ -110,23 +104,6 @@ void lvlPrevScene::load(const char* file)
     c=0;
     for( QVector<pos_t>::iterator pit = it->begin() ; pit < it->end() ; ++ pit)
     {
-        
-        /* Find smallest and biggest points */
-        if(pit->x > b.x)
-        {
-          b.x = pit->x;
-        } else if(pit->x < s.x)
-        {
-          s.x = pit->x;
-        }
-        if(pit->y > b.y)
-        {
-          b.y = pit->y;
-        } else if(pit->y < s.y)
-        {
-          s.y = pit->y;
-        }
-        
         //Add polys
         if(start)
         {
@@ -143,5 +120,6 @@ void lvlPrevScene::load(const char* file)
 
     }
   }
-  
+
 }
+
