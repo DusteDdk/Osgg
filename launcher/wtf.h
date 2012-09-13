@@ -44,6 +44,8 @@ class mW : public QMainWindow, private Ui::MainWindow
     void on_btnDemoBrowse_clicked();
     void on_btnPlayDemo_clicked();
 
+    void on_tabLvlCurrentChanged(int index);
+
   public:
     mW(QMainWindow* p);
     ~mW();

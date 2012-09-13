@@ -513,6 +513,7 @@ void mW::on_btnCreate_clicked()
     }
     /* Refresh list */
     listLevels();
+    osggCustomLevel = lvl;
     /* Find the new level */
     QList<QListWidgetItem *> list = lstCustomLvl->findItems( osggCustomLevel,Qt::MatchFixedString );
     /* Set it */
@@ -530,6 +531,32 @@ void mW::on_btnEdit_clicked()
     on_btnStart_clicked();
 }
 
+
+void mW::on_tabLvlCurrentChanged(int index)
+{
+    if(index==0)
+    {
+        //Standard level
+        on_numStartLevel_valueChanged( lstStdLvl->currentRow() );
+
+    } else if (index==1)
+    {
+        //Custom level
+
+        //If the list is not empty
+        if( lstCustomLvl->count() > 0 )
+        {
+            //If nothing is yet selected
+            if( lstCustomLvl->selectedItems().count() == 0 )
+            {
+                lstCustomLvl->setCurrentRow(0);
+            }
+        }
+        QString lvlName = osggUserDir+ "/levels/"+ lstCustomLvl->selectedItems().at(0)->text()+".level";
+
+        preview( lvlName.toStdString().data() );
+    }
+}
 
 mW::mW(QMainWindow* p) : QMainWindow(p)
 {
@@ -556,6 +583,8 @@ mW::mW(QMainWindow* p) : QMainWindow(p)
 
   QObject::connect(btnDemoBrowse, SIGNAL(clicked()), this, SLOT(on_btnDemoBrowse_clicked()));
   QObject::connect(btnPlayDemo, SIGNAL(clicked()), this, SLOT(on_btnPlayDemo_clicked()));
+
+  QObject::connect(tabLvl, SIGNAL(currentChanged(int)), this, SLOT(on_tabLvlCurrentChanged(int)) );
 
   on_numStartLevel_valueChanged(0);
   isDemo=0;
