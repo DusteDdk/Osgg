@@ -101,6 +101,12 @@ void mW::on_btnStart_clicked()
     cout <<" osgg > " << buffer;
     output << buffer;
   }
+
+  //if we were in the editor, let's refresh the preview
+  if( runEditor )
+  {
+      preview( (osggUserDir.toStdString()+"/levels/"+osggCustomLevel.toStdString()+".level").data() );
+  }
   
   //Clear isDemo and runEditor
   isDemo=0;
@@ -419,9 +425,6 @@ void mW::preview(const char* file)
     pScene = new lvlPrevScene();
     pScene->load(file);
 
-    lvlPreview->scale(0.5, -0.5);
-    lvlPreview->setRenderHints(QPainter::Antialiasing);
-
     lvlPreview->setScene( pScene );
 }
 
@@ -585,6 +588,9 @@ mW::mW(QMainWindow* p) : QMainWindow(p)
   QObject::connect(btnPlayDemo, SIGNAL(clicked()), this, SLOT(on_btnPlayDemo_clicked()));
 
   QObject::connect(tabLvl, SIGNAL(currentChanged(int)), this, SLOT(on_tabLvlCurrentChanged(int)) );
+
+  lvlPreview->scale(0.5, -0.5);
+  lvlPreview->setRenderHints(QPainter::Antialiasing);
 
   on_numStartLevel_valueChanged(0);
   isDemo=0;
