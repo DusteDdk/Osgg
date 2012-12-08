@@ -1,1 +1,5 @@
 *.o
+launcher/Makefile
+launcher/launcher
+launcher/moc_wtf.cpp
+osgg
