@@ -1,0 +1,9 @@
+#Install the nessicary things
+sudo apt-get install libxtst-dev build-essential libqt4-dev qt4-qmake
+
+#Generate a makefile
+qmake
+
+#Compile the launcher
+make
+
