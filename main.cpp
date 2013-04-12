@@ -1998,7 +1998,7 @@ int main(int argc, char **argv)
               demoRec(keyStates);
               
               //Write on screen
-              sprintf(score, "Rec: %i KiB.", (demoFrames.size()*(sizeof(demoFrame)))/1024 );
+              sprintf(score, "Recording: %zu KiB...", (demoFrames.size()*(sizeof(demoFrame)))/1024 );
               glText->write(score, FONT_DEFAULT,0, 40.0*scale, 50*scale, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
 
             //Override input
