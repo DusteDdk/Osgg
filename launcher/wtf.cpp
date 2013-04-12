@@ -541,11 +541,8 @@ void mW::on_tabLvlCurrentChanged(int index)
     {
         //Standard level
         on_numStartLevel_valueChanged( lstStdLvl->currentRow() );
-
     } else if (index==1)
     {
-        //Custom level
-
         //If the list is not empty
         if( lstCustomLvl->count() > 0 )
         {
@@ -554,10 +551,9 @@ void mW::on_tabLvlCurrentChanged(int index)
             {
                 lstCustomLvl->setCurrentRow(0);
             }
-        }
-        QString lvlName = osggUserDir+ "/levels/"+ lstCustomLvl->selectedItems().at(0)->text()+".level";
-
-        preview( lvlName.toStdString().data() );
+            QString lvlName = osggUserDir+ "/levels/"+ lstCustomLvl->selectedItems().at(0)->text()+".level";
+            preview( lvlName.toStdString().data() );
+	}
     }
 }
 
