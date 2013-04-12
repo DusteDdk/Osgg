@@ -8,7 +8,7 @@
     <x>0</x>
     <y>0</y>
     <width>484</width>
-    <height>466</height>
+    <height>478</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -194,38 +194,6 @@
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_6">
                  <item>
-                  <layout class="QVBoxLayout" name="verticalLayout_5">
-                   <item>
-                    <widget class="QLabel" name="txtTimesPlayed">
-                     <property name="text">
-                      <string>timesplayed</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="txtBestTime">
-                     <property name="text">
-                      <string>besttime</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="txtTimesCompleted">
-                     <property name="text">
-                      <string>timescompleted</string>
-                     </property>
-                    </widget>
-                   </item>
-                   <item>
-                    <widget class="QLabel" name="txtTimesDead">
-                     <property name="text">
-                      <string>timeddead</string>
-                     </property>
-                    </widget>
-                   </item>
-                  </layout>
-                 </item>
-                 <item>
                   <widget class="lvlpreviewview" name="lvlPreview">
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -383,6 +351,9 @@
              <string>Screen</string>
             </property>
             <layout class="QFormLayout" name="formLayout">
+             <property name="fieldGrowthPolicy">
+              <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+             </property>
              <property name="horizontalSpacing">
               <number>4</number>
              </property>
@@ -426,13 +397,23 @@
               </widget>
              </item>
              <item row="3" column="0">
+              <widget class="QCheckBox" name="chZoom">
+               <property name="text">
+                <string>auto zoom</string>
+               </property>
+               <property name="checked">
+                <bool>true</bool>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
               <widget class="QLabel" name="label">
                <property name="text">
                 <string>Background color:</string>
                </property>
               </widget>
              </item>
-             <item row="3" column="1">
+             <item row="4" column="1">
               <widget class="QToolButton" name="btnSelectBgColor">
                <property name="toolTip">
                 <string/>
@@ -460,6 +441,9 @@
              <string>Sound</string>
             </property>
             <layout class="QFormLayout" name="formLayout_3">
+             <property name="fieldGrowthPolicy">
+              <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+             </property>
              <item row="0" column="0">
               <widget class="QCheckBox" name="chSound">
                <property name="toolTip">

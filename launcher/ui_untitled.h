@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'untitled.ui'
 **
-** Created: Fri Apr 12 14:48:42 2013
+** Created: Fri Apr 12 15:26:13 2013
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -65,11 +65,6 @@ public:
     QPushButton *btnAddCustom;
     QPushButton *btnRemoveCustom;
     QVBoxLayout *verticalLayout_6;
-    QVBoxLayout *verticalLayout_5;
-    QLabel *txtTimesPlayed;
-    QLabel *txtBestTime;
-    QLabel *txtTimesCompleted;
-    QLabel *txtTimesDead;
     lvlpreviewview *lvlPreview;
     QWidget *demoTab;
     QVBoxLayout *verticalLayout_4;
@@ -94,6 +89,7 @@ public:
     QCheckBox *chFullScreen;
     QCheckBox *chShowFps;
     QCheckBox *chVsync;
+    QCheckBox *chZoom;
     QLabel *label;
     QToolButton *btnSelectBgColor;
     QGroupBox *groupBox_2;
@@ -109,7 +105,7 @@ public:
     {
         if (MainWindow->objectName().isEmpty())
             MainWindow->setObjectName(QString::fromUtf8("MainWindow"));
-        MainWindow->resize(484, 466);
+        MainWindow->resize(484, 478);
         QSizePolicy sizePolicy(QSizePolicy::Maximum, QSizePolicy::Maximum);
         sizePolicy.setHorizontalStretch(1);
         sizePolicy.setVerticalStretch(1);
@@ -232,31 +228,6 @@ public:
 
         verticalLayout_6 = new QVBoxLayout();
         verticalLayout_6->setObjectName(QString::fromUtf8("verticalLayout_6"));
-        verticalLayout_5 = new QVBoxLayout();
-        verticalLayout_5->setObjectName(QString::fromUtf8("verticalLayout_5"));
-        txtTimesPlayed = new QLabel(groupBoxLevels);
-        txtTimesPlayed->setObjectName(QString::fromUtf8("txtTimesPlayed"));
-
-        verticalLayout_5->addWidget(txtTimesPlayed);
-
-        txtBestTime = new QLabel(groupBoxLevels);
-        txtBestTime->setObjectName(QString::fromUtf8("txtBestTime"));
-
-        verticalLayout_5->addWidget(txtBestTime);
-
-        txtTimesCompleted = new QLabel(groupBoxLevels);
-        txtTimesCompleted->setObjectName(QString::fromUtf8("txtTimesCompleted"));
-
-        verticalLayout_5->addWidget(txtTimesCompleted);
-
-        txtTimesDead = new QLabel(groupBoxLevels);
-        txtTimesDead->setObjectName(QString::fromUtf8("txtTimesDead"));
-
-        verticalLayout_5->addWidget(txtTimesDead);
-
-
-        verticalLayout_6->addLayout(verticalLayout_5);
-
         lvlPreview = new lvlpreviewview(groupBoxLevels);
         lvlPreview->setObjectName(QString::fromUtf8("lvlPreview"));
         QSizePolicy sizePolicy4(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -388,6 +359,7 @@ public:
         groupBox->setSizePolicy(sizePolicy9);
         formLayout = new QFormLayout(groupBox);
         formLayout->setObjectName(QString::fromUtf8("formLayout"));
+        formLayout->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
         formLayout->setHorizontalSpacing(4);
         formLayout->setVerticalSpacing(4);
         chFullScreen = new QCheckBox(groupBox);
@@ -407,16 +379,22 @@ public:
 
         formLayout->setWidget(2, QFormLayout::LabelRole, chVsync);
 
+        chZoom = new QCheckBox(groupBox);
+        chZoom->setObjectName(QString::fromUtf8("chZoom"));
+        chZoom->setChecked(true);
+
+        formLayout->setWidget(3, QFormLayout::LabelRole, chZoom);
+
         label = new QLabel(groupBox);
         label->setObjectName(QString::fromUtf8("label"));
 
-        formLayout->setWidget(3, QFormLayout::LabelRole, label);
+        formLayout->setWidget(4, QFormLayout::LabelRole, label);
 
         btnSelectBgColor = new QToolButton(groupBox);
         btnSelectBgColor->setObjectName(QString::fromUtf8("btnSelectBgColor"));
         btnSelectBgColor->setStyleSheet(QString::fromUtf8("background-color: rgb(0, 0, 0);"));
 
-        formLayout->setWidget(3, QFormLayout::FieldRole, btnSelectBgColor);
+        formLayout->setWidget(4, QFormLayout::FieldRole, btnSelectBgColor);
 
 
         verticalLayout_8->addWidget(groupBox);
@@ -427,6 +405,7 @@ public:
         groupBox_2->setSizePolicy(sizePolicy9);
         formLayout_3 = new QFormLayout(groupBox_2);
         formLayout_3->setObjectName(QString::fromUtf8("formLayout_3"));
+        formLayout_3->setFieldGrowthPolicy(QFormLayout::AllNonFixedFieldsGrow);
         chSound = new QCheckBox(groupBox_2);
         chSound->setObjectName(QString::fromUtf8("chSound"));
         chSound->setChecked(true);
@@ -495,10 +474,6 @@ public:
         btnAddCustom->setText(QApplication::translate("MainWindow", "Add", 0, QApplication::UnicodeUTF8));
         btnRemoveCustom->setText(QApplication::translate("MainWindow", "Remove", 0, QApplication::UnicodeUTF8));
         tabLvl->setTabText(tabLvl->indexOf(tab_2), QApplication::translate("MainWindow", "Custom", 0, QApplication::UnicodeUTF8));
-        txtTimesPlayed->setText(QApplication::translate("MainWindow", "timesplayed", 0, QApplication::UnicodeUTF8));
-        txtBestTime->setText(QApplication::translate("MainWindow", "besttime", 0, QApplication::UnicodeUTF8));
-        txtTimesCompleted->setText(QApplication::translate("MainWindow", "timescompleted", 0, QApplication::UnicodeUTF8));
-        txtTimesDead->setText(QApplication::translate("MainWindow", "timeddead", 0, QApplication::UnicodeUTF8));
         tabWidget->setTabText(tabWidget->indexOf(gameTab), QApplication::translate("MainWindow", "Game", 0, QApplication::UnicodeUTF8));
         btnPlayDemo->setText(QApplication::translate("MainWindow", "Play Demo!", 0, QApplication::UnicodeUTF8));
         label_5->setText(QApplication::translate("MainWindow", "LevelFile:", 0, QApplication::UnicodeUTF8));
@@ -523,6 +498,7 @@ public:
         chVsync->setToolTip(QApplication::translate("MainWindow", "Turn on Vsync for smooth gameplay.", 0, QApplication::UnicodeUTF8));
 #endif // QT_NO_TOOLTIP
         chVsync->setText(QApplication::translate("MainWindow", "vsync", 0, QApplication::UnicodeUTF8));
+        chZoom->setText(QApplication::translate("MainWindow", "auto zoom", 0, QApplication::UnicodeUTF8));
         label->setText(QApplication::translate("MainWindow", "Background color:", 0, QApplication::UnicodeUTF8));
 #ifndef QT_NO_TOOLTIP
         btnSelectBgColor->setToolTip(QString());

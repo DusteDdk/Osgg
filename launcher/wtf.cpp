@@ -71,6 +71,9 @@ void mW::on_btnStart_clicked()
     cmdLine += " --is";
   if(chFullScreen->isChecked())
     cmdLine += " --fullscreen";
+  if(!chZoom->isChecked())
+    cmdLine += " --nozoom";
+
   
   if(!chVsync->isChecked())
     cmdLine += " --sleep";
@@ -421,7 +424,10 @@ void mW::on_numStartLevel_valueChanged(int l)
 
 void mW::preview(const char* file)
 {
-  delete pScene;
+    if(pScene)
+    {
+        delete pScene;
+    }
     pScene = new lvlPrevScene();
     pScene->load(file);
 
@@ -559,6 +565,7 @@ void mW::on_tabLvlCurrentChanged(int index)
 
 mW::mW(QMainWindow* p) : QMainWindow(p)
 {
+  pScene=NULL;
   setupUi(p);
 
   loadSettings();
@@ -591,7 +598,6 @@ mW::mW(QMainWindow* p) : QMainWindow(p)
   on_numStartLevel_valueChanged(0);
   isDemo=0;
   runEditor=0;
-  
 }
 
 mW::~mW()

@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Resource object code
 **
-** Created: Thu Sep 13 11:04:23 2012
+** Created: Fri Apr 12 15:26:16 2013
 **      by: The Resource Compiler for Qt version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost!
@@ -10,7 +10,7 @@
 #include <QtCore/qglobal.h>
 
 static const unsigned char qt_resource_data[] = {
-  // /home/chrisji/Desktop/dst/Osgg/launcher/icon.png
+  // /home/chrisji/prv/Osgg/launcher/icon.png
   0x0,0x0,0x7,0x4d,
   0x89,
   0x50,0x4e,0x47,0xd,0xa,0x1a,0xa,0x0,0x0,0x0,0xd,0x49,0x48,0x44,0x52,0x0,
