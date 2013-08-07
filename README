@@ -1,6 +1,9 @@
 -- OldSkoolGravityGame --
  - A gravity game in glorious 70's style vector graphics.
 
+To run the game, type:
+./start.sh 
+
 -- Index --
 0.0 osgg Info and License
 0.1 Objective

@@ -39,7 +39,7 @@
 #endif
 
 
-#define VERSION "1.0SVN"
+#define VERSION "1.0"
 
 
 
@@ -662,29 +662,46 @@ void renderEntities(vector<entity> ents)
   }
 }
 
+GLuint gridDL;
+
+void genGrid()
+{
+	GLfloat step = 4.95946, steps=1000;
+	GLfloat len=step*steps;
+	GLfloat f=0;
+	
+	gridDL = glGenLists(1);
+	glNewList( gridDL, GL_COMPILE );
+	glColor3f(0.3,0.3,0.3);
+	glBegin(GL_LINES);
+
+	f = -( len/2.0 );	
+        while(f <= (len)/2.0 )
+        {
+          glVertex2f(f, (len/2.0) );
+          glVertex2f(f, -(len/2.0) );
+          f+=step;
+        }
+
+	f = -( len/2.0 );	
+        while(f <= (len)/2.0 )
+        {
+          glVertex2f( (len/2.0), f );
+          glVertex2f( -(len/2.0), f );
+          f+=step;
+        }
+
+	glEnd( );
+	glEndList();
+}
+
 void drawGrid()
 {
-      //Draw a grid as editor background
-      glColor3f(0.3,0.3,0.3);
-      glBegin(GL_LINES);
-
-        GLfloat x = int(dispInfo.camPos.x/5.0)*5 - dispInfo.glSceneSize.x;
-        while(x < dispInfo.camPos.x + dispInfo.glSceneSize.x)
-        {
-          glVertex2f(x-dispInfo.camPos.x, -dispInfo.glSceneSize.y);
-          glVertex2f(x-dispInfo.camPos.x,  dispInfo.glSceneSize.y);
-          x += 5.0;
-        }
-
-        GLfloat y = int(dispInfo.camPos.y/5.0)*5 + dispInfo.glSceneSize.y;
-        while(y > dispInfo.camPos.y -dispInfo.glSceneSize.y)
-        {
-          glVertex2f(-dispInfo.glSceneSize.x,  y-dispInfo.camPos.y);
-          glVertex2f( dispInfo.glSceneSize.x,  y-dispInfo.camPos.y);
-          y -= 5.0;
-        }
-
-      glEnd( );
+	glPushMatrix();
+	glLoadIdentity();
+	glTranslatef( -dispInfo.camPos.x, -dispInfo.camPos.y, 0 );
+	glCallList(gridDL);
+	glPopMatrix();
 }
 
 void saveMap(vector< vector<vert> >verts, vector<entity> ents, string FileName)
@@ -1697,6 +1714,8 @@ int main(int argc, char **argv)
     setRes(800,600);
   }
 
+  genGrid();
+
   soundMan = new soundClass;
   soundMan->init();
   
@@ -1912,15 +1931,13 @@ int main(int argc, char **argv)
           {
           dispInfo.glBaseZoom += 2;
 	  dispInfo.glZoom = dispInfo.glBaseZoom;
-	  if(!dispInfo.enableZoom || gameState == GameStateEditor)
-	    setSeneSize();
+	  setSeneSize();
           }
           else if(event.button.button == SDL_BUTTON_WHEELUP)
           {
           dispInfo.glBaseZoom -= 2;
 	  dispInfo.glZoom = dispInfo.glBaseZoom;
-	  if(!dispInfo.enableZoom || gameState == GameStateEditor)
-	    setSeneSize();
+	  setSeneSize();
           }
 
         break;
