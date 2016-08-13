@@ -30,7 +30,7 @@ glTextClass::glTextClass()
   //Parse font-description file
   string line,set,val,tempName;
 
-  genFontTex(DATADIR"Bandal.ttf", 60, FONT_DEFAULT);
+  genFontTex(DATADIR "Bandal.ttf", 60, FONT_DEFAULT);
 
   TTF_Quit();
 }
@@ -129,8 +129,10 @@ void glTextClass::genFontTex(string TTFfontName, int fontSize, int font)
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, t->w, t->h, 0, GL_RGBA, GL_UNSIGNED_BYTE, t->pixels);
 
@@ -139,43 +141,37 @@ void glTextClass::genFontTex(string TTFfontName, int fontSize, int font)
   SDL_FreeSurface(t); //Free text-surface
 }
 
-void glTextClass::write(string text, int font,bool center, GLfloat scale, GLfloat x, GLfloat y)
+void glTextClass::write(string text, int font, GLfloat scale, GLfloat x, GLfloat y)
 {
   int c;
-  GLfloat sX,sY,posX=0;
+  GLfloat sX,sY,ssY,posX=0;
 
-  //We need to find out half of the string width in order to center
-  if(center)
-  {
-    for(unsigned int i=0; i < text.length(); i++)
-    {
-      c = (unsigned int)text[i];
-      sX = fontInfo[font].ch[c].width*scale;
-      posX += sX;
-    }
-    posX *= -1;
-  }
-  posX += x;
+  posX = x;
 
   glEnable( GL_TEXTURE_2D );
   glBindTexture(GL_TEXTURE_2D, fontInfo[font].tex);
 
-
+  sY = fontInfo[font].height*scale;
+  ssY = sY+sY;
   //Draw the quads
   for(unsigned int i=0; i < text.length(); i++)
   {
     c = (unsigned int)text[i];
-    sX = fontInfo[font].ch[c].width*scale;
-    sY = fontInfo[font].height*scale;
-    posX += sX;
+    if( c != '\n' ) {
+      sX = fontInfo[font].ch[c].width*scale;
+      posX += sX;
 
-    glBegin(GL_QUADS);
-      glTexCoord2f( fontInfo[font].ch[c].Xa,fontInfo[font].ch[c].Ya ); glVertex3f(-sX+posX, sY+y,0);
-      glTexCoord2f( fontInfo[font].ch[c].Xb,fontInfo[font].ch[c].Ya ); glVertex3f( sX+posX, sY+y,0);
-      glTexCoord2f( fontInfo[font].ch[c].Xb,fontInfo[font].ch[c].Yb ); glVertex3f( sX+posX,-sY+y,0);
-      glTexCoord2f( fontInfo[font].ch[c].Xa,fontInfo[font].ch[c].Yb ); glVertex3f(-sX+posX,-sY+y,0);
-    glEnd( );
-    posX += sX;
+      glBegin(GL_QUADS);
+        glTexCoord2f( fontInfo[font].ch[c].Xa,fontInfo[font].ch[c].Ya ); glVertex3f(-sX+posX, sY+y,0);
+        glTexCoord2f( fontInfo[font].ch[c].Xb,fontInfo[font].ch[c].Ya ); glVertex3f( sX+posX, sY+y,0);
+        glTexCoord2f( fontInfo[font].ch[c].Xb,fontInfo[font].ch[c].Yb ); glVertex3f( sX+posX,-sY+y,0);
+        glTexCoord2f( fontInfo[font].ch[c].Xa,fontInfo[font].ch[c].Yb ); glVertex3f(-sX+posX,-sY+y,0);
+      glEnd( );
+      posX += sX;
+    } else {
+      posX=x;
+      y -= ssY;
+    }
   }
   glDisable( GL_TEXTURE_2D );
 }

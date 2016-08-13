@@ -47,7 +47,7 @@ class glTextClass {
 
   public:
     GLfloat getHeight(int font);
-    void write(string text, int font, bool center, GLfloat scale, GLfloat x, GLfloat y);
+    void write(string text, int font, GLfloat scale, GLfloat x, GLfloat y);
     glTextClass();
     ~glTextClass();
 };

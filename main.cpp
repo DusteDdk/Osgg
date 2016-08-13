@@ -41,8 +41,6 @@
 
 #define VERSION "1.0"
 
-
-
 #ifndef DATADIR
     #define DATADIR "./"
 #endif
@@ -56,6 +54,9 @@ bool soundOn,intermediateSave, vsync,showfps;
 #include "text.hpp"
 glTextClass* glText = NULL;
 soundClass* soundMan = NULL;
+
+bool showHelp=true;
+bool booted=true;
 
 #define THRUSTINCRATE 0.01
 #define GRAVITY 0.002
@@ -1096,6 +1097,80 @@ bool landCol(vector<vert> baseVerts, vector<vert> shipVerts)
   return(0);
 }
 
+static char plInfo[] = 
+"                         -= Welcome to OSGG =-\n\n"
+"  Your objective: Land on platforms as shown on radar.\n\n"
+"  Game Controls:\n"
+"    Arrows keys: Thrust/turn\n"
+"    Mouse wheel: Zoom in/Out\n"
+"    h: show/hide this screen\n"
+"    t: Restart Level\n"
+"    s: Go to level editor\n"
+"    F1: Start recording demo\n"
+"    F2: Stop demo record (save to ./demo.bin)\n"
+"    F10: Toggle sound\n"
+"    F11: Toggle fullscreen\n"
+"    F12: Screenshot\n"
+"    Pause: Pause the game\n"
+"    ESC: Exit the program";
+
+static char edInfo[] = 
+"                       -= The OSGG Level Editor =-\n\n"
+"  ESC = Cancel poly creation, or exit program\n"
+"  Left mouse button: Add/Edit/Drag\n"
+"  Right mouse button: Move around the board\n"
+"  Mouse wheel: Zoom in/Out\n"
+"  0: Adding: Polygons\n"
+"  1: Collision detection on for next verticies\n"
+"  2: Collision detection off for the next verticies\n"
+"  4: Next vertices are white - 5: Grey - 6: Invisible\n"
+"  7: Red - 8: Green - 9: Blue\n"
+"  q: Adding: The ship (Player start position)\n"
+"  w: Adding: Bases\n"
+"  e: Adding: enemies\n"
+"  m: Adding: Mission waypoints.\n"
+"  n: Enable defined waypoints. (Press before saving)\n"
+"  g: save map - t: start new game from starting level\n"
+"  s: Back to game\n"
+"  del: remove polygon or entity\n"
+"  /* 3: Landing platform (not for levels, only verts.txt)     *\n"
+"   * d: Write the first polygon to verts.txt (not for levels) */";
+
+void renderHelp() {
+  if(showHelp) {
+    char* info;
+    char buf[1024];
+    if( gameState == GameStatePlaying || gameState == GameStatePause )
+    {
+      info = plInfo;
+      buf[0]=0;
+    } else if( gameState == GameStateEditor )
+    {
+      info = edInfo;
+      sprintf(buf, "File: %s", levelFile.c_str() );
+    } else {
+      return;
+    }
+
+    //Whoa, I was crazy back then (too)
+    GLfloat scale = dispInfo.glZoom/100.0;
+
+    glColor4f(0.05,0.05,0.05,0.8);
+    glBegin( GL_QUADS );
+      glVertex2f(-125.0*scale, 95.0*scale );
+      glVertex2f(125.0*scale, 95.0*scale );
+      glVertex2f(125.0*scale, -95.0*scale );
+      glVertex2f(-125.0*scale, -95.0*scale );
+    glEnd( );
+
+    glColor4f(1,1,1,1);
+    glText->write(info, FONT_DEFAULT, 50.0*scale, -120*scale, 85*scale );
+    glColor4f(1,0,0,1);
+    glText->write(buf, FONT_DEFAULT, 40.0*scale, -120*scale, -90*scale );
+
+  }
+}
+
 void renderRadar(vector<entity> ents, vector<vector <vert> > Poly)
 {
   //The radar and everything should be the same size regardless of zoom
@@ -1192,7 +1267,7 @@ void renderRadar(vector<entity> ents, vector<vector <vert> > Poly)
   //draw destination distance
   sprintf(txt, "> %0.1f u", gameInfo.distance );
   glColor4f(0,1,0,1);
-  glText->write(txt, FONT_DEFAULT,0, 40.0*scale, -15*scale, 15*scale+(glText->getHeight(FONT_DEFAULT)*20.0*scale));
+  glText->write(txt, FONT_DEFAULT, 40.0*scale, -15*scale, 15*scale+(glText->getHeight(FONT_DEFAULT)*20.0*scale));
 
   glTranslatef(-35*scale, 0, 0);
 
@@ -1285,7 +1360,7 @@ void renderRadar(vector<entity> ents, vector<vector <vert> > Poly)
 
   //Draw speed
   sprintf(txt, "%0.1f u/T", gameInfo.speed);
-  glText->write(txt, FONT_DEFAULT,0, 40.0*scale, -15*scale, 15*scale+(glText->getHeight(FONT_DEFAULT)*20.0*scale));
+  glText->write(txt, FONT_DEFAULT, 40.0*scale, -15*scale, 15*scale+(glText->getHeight(FONT_DEFAULT)*20.0*scale));
 
   glLoadIdentity();
 
@@ -1789,7 +1864,14 @@ int main(int argc, char **argv)
               (gameState==GameStatePause) ? gameState=GameStatePlaying : gameState=GameStatePause;
               break;
             case SDLK_ESCAPE:
-              if(editMode==1)
+
+              if(showHelp)
+              {
+                if(gameState==GameStatePause) {
+                  gameState=GameStatePlaying;
+                }
+                showHelp=false;
+              } else if(editMode==1)
               {
                 editMode=2;
               } else {
@@ -1855,6 +1937,15 @@ int main(int argc, char **argv)
               break;
             case SDLK_n:
               gameInfo.nextObjective = editorIntWayPoints;
+              break;
+            case SDLK_h:
+              if(showHelp && gameState==GameStatePause) {
+                gameState=GameStatePlaying;
+              } else if( gameState == GameStatePlaying )
+              {
+                gameState = GameStatePause;
+              }
+              showHelp = !showHelp;
               break;
             case SDLK_e:
               newType=entEnemy;
@@ -1959,7 +2050,12 @@ int main(int argc, char **argv)
     {
       case GameStateNewGame:
         initNewGame(polys,ents);
-        gameState=GameStatePlaying;
+        if(booted) {
+          gameState = GameStatePause;
+          booted=false;
+        } else {
+          gameState=GameStatePlaying;
+        }
       break;
       
       case GameStateStartEditor:
@@ -1977,6 +2073,7 @@ int main(int argc, char **argv)
         renderEntities(ents);
         renderRadar(ents,polys);
         sparkler.render();
+        
       break;
       case GameStatePlaying:
         renderPolys(polys);
@@ -1994,12 +2091,12 @@ int main(int argc, char **argv)
         scale = dispInfo.glZoom/100.0;
 
         sprintf(score, "%i.%i", gameInfo.score/60,  int(((gameInfo.score%60)*2)));
-        glText->write(score, FONT_DEFAULT,0, 50.0*scale, 0.0, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
+        glText->write(score, FONT_DEFAULT, 50.0*scale, 0.0, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
 
         if(showfps)
         {
           sprintf(score, "%i fps", lastFps);
-          glText->write(score, FONT_DEFAULT,0, 40.0*scale, -120*scale, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
+          glText->write(score, FONT_DEFAULT, 40.0*scale, -120*scale, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
         }
         
         //Ents:
@@ -2016,7 +2113,7 @@ int main(int argc, char **argv)
               
               //Write on screen
               sprintf(score, "Recording: %zu KiB...", (demoFrames.size()*(sizeof(demoFrame)))/1024 );
-              glText->write(score, FONT_DEFAULT,0, 40.0*scale, 50*scale, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
+              glText->write(score, FONT_DEFAULT, 40.0*scale, 50*scale, dispInfo.glSceneSize.y- (glText->getHeight(FONT_DEFAULT)*30.0)*scale );
 
             //Override input
             }
@@ -2539,12 +2636,12 @@ int main(int argc, char **argv)
       //Render gameworld
       renderPolys(polys);
       renderEntities(ents);
-
       break;
     }
 
 
 
+    renderHelp();
 
     /* Swap buffers, it should block to wait for vsync */
     SDL_GL_SwapBuffers( );
