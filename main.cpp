@@ -1446,7 +1446,7 @@ bool screenShot()
 
 
   unsigned char TGAheader[12]={0,0,2,0,0,0,0,0,0,0,0,0};
-  unsigned char header[6] = {dispInfo.dispSize.x%256,dispInfo.dispSize.x/256,dispInfo.dispSize.y%256,dispInfo.dispSize.y/256,24,0};
+  unsigned char header[6] = { (unsigned char)(dispInfo.dispSize.x%256),(unsigned char)(dispInfo.dispSize.x/256),(unsigned char)(dispInfo.dispSize.y%256),(unsigned char)(dispInfo.dispSize.y/256),24,0};
   fwrite(TGAheader, sizeof(unsigned char), 12, fscreen);
   fwrite(header, sizeof(unsigned char), 6, fscreen);
 
@@ -1684,11 +1684,11 @@ int main(int argc, char **argv)
   {
     cout << SDL_GetError() << endl;
   }
-  SDL_WM_SetCaption("OldSkoolGravityGame "VERSION, "OSGG");
+  SDL_WM_SetCaption("OldSkoolGravityGame " VERSION, "OSGG");
   SDL_ShowCursor(SDL_DISABLE);
   SDL_WM_SetIcon( IMG_Load( DATADIR"icon.png" ), 0 );
 
-  cout << "Old Skool Gravity Game "VERSION". GPL v3"<<endl;
+  cout << "Old Skool Gravity Game " VERSION ". GPL v3"<<endl;
   cout << " ./osgg [NUM] [--levelfile FILE] [--playdemo FILE] [--savedemo FILE] [--nosound] [--fullscreen] [--bgcolor RRGGBB] [--edit] [--is] [--sleep] [--showfps] [--nozoom]" << endl;
   cout << "Editor controls:\n esc = cancel poly creation, or exit program. \n del = remove.\n 1 = collision on, 2 = collision off, 3 Platform\n";
   cout << " 4 = white, 5 = grey, 6=Invisible, 7 = red, 8 = green, 9 = blue\n";
