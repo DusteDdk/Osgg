@@ -1,0 +1,24 @@
+CC=i586-mingw32msvc-g++ -DWIN32 -DWIN32_CROSS -D_DEFAULT_SOURCE -D__USE_BSD
+
+CFLAGS+=-Wall 
+
+LIBS+=-lmingw32 -lSDLmain -lSDL -lSDL_image -lSDL_mixer -lSDL_ttf -lm -lopengl32
+
+SOURCES=main.cpp text.cpp sound.cpp
+OBJECTS=$(SOURCES:.c=.o)
+
+EXECUTABLE=osgg.exe
+
+all: $(SOURCES) $(EXECUTABLE)
+
+server: server.cpp
+	$(CC) $(LDFLAGS) server.cpp $(LIBS) -o $@
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(LDFLAGS) $(OBJECTS) $(LIBS) -o $@
+
+.cpp.o:
+	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm -f *.o $(EXECUTABLE)
