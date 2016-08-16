@@ -16,6 +16,15 @@
 
 using namespace std;
 
+#ifndef DATADIR
+    #define DATADIR "./"
+#endif
+
+#ifndef EXECPATH
+    #define EXECPATH "./osgg.bin"
+#endif
+
+
 void mW::on_btnStart_clicked()
 {
   string cmdLine;
@@ -222,8 +231,9 @@ void mW::saveSettings()
 
 void mW::loadSettings()
 {
-  osggDataDir="./";
-  osggExecPath="./osgg";
+  osggDataDir=DATADIR;
+  osggExecPath=EXECPATH;
+
   osggUserDir=QDir::homePath();
   osggUserDir.append("/.osgg");
   
@@ -252,9 +262,11 @@ void mW::loadSettings()
           if(set=="dataDir")
           {
             osggDataDir = val.data();
+            cout << "Using datadir from " << fileName.toStdString() << ": " << osggDataDir.toStdString() << endl;
           } else if(set=="execPath")
           {
             osggExecPath = val.data();
+            cout << "Using execpath from " << fileName.toStdString() << ": " << osggExecPath.toStdString() << endl;
           } else if(set=="is")
           {
             chIs->setChecked( atoi(val.data()) );
@@ -304,8 +316,7 @@ void mW::loadSettings()
     }
     info.exec();
   }
-  
-  
+
 }
 
 void mW::refreshSettings()

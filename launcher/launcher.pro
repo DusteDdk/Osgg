@@ -8,3 +8,4 @@ SOURCES = main.cpp wtf.cpp lvlPrevScene.cpp \
 RESOURCES = std.qrc
 QT += widgets
 DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x000000
+RC_FILE = launcher.rc
