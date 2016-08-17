@@ -17,9 +17,9 @@ VER=$(cat main.cpp | grep "define VERSION" | cut -f 2 -d '"')
 DST="$JOBNAME"-version_$VER"-build_$BN"
 mkdir $DST
 
-echo =
-echo == Building 64 bit linux version ...
-echo ===
+# =
+# == Building 64 bit linux version ...
+# ===
 
 # 64 bit version
 pushd launcher
@@ -39,20 +39,28 @@ pushd launcher
 make clean
 popd
 
-echo =
-echo == Building 32 bit linux version ...
-echo ===
+# =
+# == Building 32 bit linux version ...
+# ===
 
+TMPSCRIPT=`mktemp`
+if [ -f $TMPSCRIPT ]
+then
+  # I seriously can't figure out a sane way of getting the literal string: qmake DEFINES+='EXECPATH=\"\\\"./osgg_linux_x64\\\"\"' executed in the chrooted environment in a different way.. except for committing the file, and that's also ugly..
+  echo IyEvYmluL2Jhc2gKY2QgL2hvbWUvY29udGlncmF0b3Ivam9icy9Pc2dnL3dvcmtzcGFjZS9sYXVuY2hlcgpxbWFrZSBERUZJTkVTKz0nRVhFQ1BBVEg9XCJcXFwiLi9vc2dnX2xpbnV4X3g4NlxcXCJcIicKbWFrZQpjZCAuLgptYWtlCg== | base64 -d > $TMPSCRIPT
+  chmod +x $TMPSCRIPT
 
 # The chrooted 32 bit linux version.
-sudo -E -P USER=$USER USERNAME=$USER LOGNAME=$LOGNAME -- /usr/sbin/chroot /var/local/32bitDeb/ su -p -l $USER -c "cd /home/contigrator/jobs/Osgg/workspace/launcher && qmake DEFINES+='EXECPATH=\"\\\"./osgg_linux_x86\\\"\"' && make && cd .. && make "
+  sudo -E -P USER=$USER USERNAME=$USER LOGNAME=$LOGNAME -- /usr/sbin/chroot /var/local/32bitDeb/ su -p -l $USER -c "$TMPSCRIPT"
+  rm -f $TMPSCRIPT
 
-mv launcher/launcher $DST/launcher_linux_x86
-mv osgg $DST/osgg_linux_x86
+  mv launcher/launcher $DST/launcher_linux_x86
+  mv osgg $DST/osgg_linux_x86
+fi
 
-echo =
-echo == Building 32 bit windows version ...
-echo ===
+# =
+# == Building 32 bit windows version ...
+# ===
 
 # The windows version
 pushd launcher
@@ -64,7 +72,7 @@ make
 PATH="$OLDPATH"
 unset OLDPATH
 find .
-mv "./release/launcher.exe" "../$DST/launcher_windows.exe"
+mv "./release/launcher.exe" "../launcher.exe"
 rm -Rf debug
 rm -Rf release
 rm -f *.o
@@ -72,24 +80,42 @@ rm -f *.exe
 popd
 make clean
 make -f Makefile.win
-mv osgg.exe $DST/osgg_windows.exe
 
-echo =
-echo == Packaging ...
-echo ===
+# =
+# == Packaging ...
+# ===
 
-
+# Add changelog
+git log > changelog.txt
+cp changelog.txt $DST/changelog.txt
 
 # Data files
-cp -r demos levels *.txt *.ttf *.txt *.ogg *.png *.sh $DST
+cp -r demos levels *.txt *.ttf *.txt *.ogg *.png start.sh $DST
+
+#Package the Linux version
+tar -c $DST | pbzip2 > "$DST"_linux.tar.bz2
+
+# Remove linux binaries for the zip
+rm $DST/*_linux_*
+rm $DST/*.sh
+# Add .exe files for the windows version
+mv launcher.exe $DST/launcher_windows.exe
+mv osgg.exe $DST/osgg_windows.exe
+unix2dos $DST/changelog.txt
+# Add dlls for the windows version
 cp -r ../dlls/* $DST
+# Add .bat for the windows version
+cp start.bat $DST
+zip -r "$DST"_windows.zip $DST
 
-tar jcf "$DST".tar.bz2 $DST
-
-zip -r "$DST".zip $DST
-
-mv "$DST".tar.bz2 $OUT
-mv "$DST".zip $OUT
+mv "$DST"_linux.tar.bz2 $OUT
+mv "$DST"_windows.zip $OUT
 
 rm -R "$DST"
 
+# Build the source code
+git archive --prefix="osgg_build_$BN"_src/ HEAD > "$DST"_src.tar
+tar --file "$DST"_src.tar --append --transform 's%^%osgg_build_'$BN'_src/%' changelog.txt
+cat "$DST"_src.tar | pxz > "$OUT/$DST"_src.tar.xz
+
+rm -f "$DST"_src.tar changelog.txt
