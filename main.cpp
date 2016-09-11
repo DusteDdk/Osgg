@@ -1828,9 +1828,9 @@ int main(int argc, char **argv)
 
   GLfloat scale;
 
-  readEnt("ship.txt", gameInfo.shipStaticVerts);
-  readEnt("base.txt", gameInfo.baseStaticVerts);
-  readEnt("enemy.txt", gameInfo.enemyStaticVerts);
+  readEnt(DATADIR "ship.txt", gameInfo.shipStaticVerts);
+  readEnt(DATADIR "base.txt", gameInfo.baseStaticVerts);
+  readEnt(DATADIR "enemy.txt", gameInfo.enemyStaticVerts);
 
   //Enter Main loop
   while(gameState != GameStateQuit)
@@ -1960,7 +1960,7 @@ int main(int argc, char **argv)
               break;
 
             case SDLK_d:
-              saveMap(polys, ents, "verts.txt");
+              saveMap(polys, ents, DATADIR "verts.txt");
             break;
 
             case SDLK_s:
