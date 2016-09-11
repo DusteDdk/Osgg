@@ -350,6 +350,7 @@ bool classBullets::col(vector<vert> target, bool isShip)
       }
     }
   }
+  return false;
 }
 
 void classBullets::shoot(entity owner, gPs velocity)
