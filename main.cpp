@@ -30,12 +30,14 @@
 
 #include <sys/time.h>
 
-#ifndef WIN32
-    #include <endian.h>
-#else
+#if defined(WIN32)
     typedef unsigned int uint;
     #include <windows.h>
     #include <GL/glext.h>
+#elif defined(__FreeBSD__)
+    #include <sys/endian.h>
+#else
+    #include <endian.h>
 #endif
 
 
