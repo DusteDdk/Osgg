@@ -30,12 +30,14 @@
 
 #include <sys/time.h>
 
-#ifndef WIN32
-    #include <endian.h>
-#else
+#if defined(WIN32)
     typedef unsigned int uint;
     #include <windows.h>
     #include <GL/glext.h>
+#elif defined(__FreeBSD__)
+    #include <sys/endian.h>
+#else
+    #include <endian.h>
 #endif
 
 
@@ -348,6 +350,7 @@ bool classBullets::col(vector<vert> target, bool isShip)
       }
     }
   }
+  return false;
 }
 
 void classBullets::shoot(entity owner, gPs velocity)
@@ -1826,9 +1829,9 @@ int main(int argc, char **argv)
 
   GLfloat scale;
 
-  readEnt("ship.txt", gameInfo.shipStaticVerts);
-  readEnt("base.txt", gameInfo.baseStaticVerts);
-  readEnt("enemy.txt", gameInfo.enemyStaticVerts);
+  readEnt(DATADIR "ship.txt", gameInfo.shipStaticVerts);
+  readEnt(DATADIR "base.txt", gameInfo.baseStaticVerts);
+  readEnt(DATADIR "enemy.txt", gameInfo.enemyStaticVerts);
 
   //Enter Main loop
   while(gameState != GameStateQuit)
@@ -1958,7 +1961,7 @@ int main(int argc, char **argv)
               break;
 
             case SDLK_d:
-              saveMap(polys, ents, "verts.txt");
+              saveMap(polys, ents, DATADIR "verts.txt");
             break;
 
             case SDLK_s:
