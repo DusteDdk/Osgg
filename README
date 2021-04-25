@@ -15,6 +15,7 @@ To run the game, type:
 1.3 Entities
 1.4 Waypoints
 2.0 Requirements, Compiling, Installation
+3.0 E-Begging
 ---------------------------------
 
 0.0 osgg Info and License
@@ -163,3 +164,8 @@ and create a dir for the datafiles:
 mkdir "/path/to/data/dir"
 and copy the datafiles:
 cp -a * "/path/to/data/dir/"
+
+---------------------------------
+
+3.0 Donations
+Today is YOUR lucky day! If you've enjoyed OSGG, consider sending a small token of grattitude towards my Dogecoin wallet at: DHu41ELvTho6SUiuNDnyQYdDmDrYiWZuvR
